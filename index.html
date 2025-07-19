@@ -4,32 +4,26 @@
   <meta charset="UTF-8">
   <title>Tree of Love</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
+
     body {
       margin: 0;
       background: #ffccd5;
       overflow: hidden;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Pacifico', cursive;
     }
     canvas {
       display: block;
-    }
-    #message {
-      position: absolute;
-      top: 50%;
-      width: 100%;
-      text-align: center;
-      font-size: 2em;
-      color: #9d2f50;
-      transform: translateY(-50%);
-      text-shadow: 2px 2px 4px #fff;
-      padding: 0 20px;
-      box-sizing: border-box;
     }
   </style>
 </head>
 <body>
 <canvas id="canvas"></canvas>
-<div id="message">Even this heart, drawn in pixels, beats only for you, Anamika.</div>
+
+<audio autoplay loop>
+  <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
 
 <script>
   // Set up canvas
@@ -72,17 +66,35 @@
     return this.points[i % this.length].mul(scale || 1);
   };
 
-  // Draw heart animation
+  // Draw heart animation with glowing handwritten text
   const heart = new Heart();
+  const text = "Even this heart, drawn in pixels, beats only for you, Anamika.";
+  const textLetters = text.split('');
   let i = 0;
 
   function animate() {
-    if (i < heart.length) {
-      const pt = heart.get(i, 15).translate(canvas.width / 2, canvas.height / 2);
-      ctx.fillStyle = `hsl(${(i * 10) % 360}, 70%, 60%)`;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw heart dots
+    for (let j = 0; j < i; j++) {
+      const pt = heart.get(j, 15).translate(canvas.width / 2, canvas.height / 2);
+      ctx.fillStyle = `hsl(${(j * 10) % 360}, 70%, 60%)`;
       ctx.beginPath();
       ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
       ctx.fill();
+    }
+
+    // Draw glowing text along the heart path
+    for (let k = 0; k < textLetters.length && k < i; k++) {
+      const pt = heart.get(k, 15).translate(canvas.width / 2, canvas.height / 2);
+      ctx.font = "18px Pacifico";
+      ctx.shadowColor = "#ff69b4";
+      ctx.shadowBlur = 12;
+      ctx.fillStyle = "#ff2d78";
+      ctx.fillText(textLetters[k], pt.x - 4, pt.y + 5);
+    }
+
+    if (i < heart.length) {
       i++;
       requestAnimationFrame(animate);
     }
