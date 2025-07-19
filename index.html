@@ -19,6 +19,11 @@
 <body>
 <canvas id="canvas"></canvas>
 
+<audio autoplay loop>
+  <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg" />
+  Your browser does not support the audio element.
+</audio>
+
 <script>
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d');
@@ -55,4 +60,54 @@
   const text = "Even this heart, drawn in pixels, beats only for you, Anamika.";
   const textLetters = text.split('');
 
-  // Generate enough points for all letter
+  // Generate enough points for all letters inside the heart
+  const scale = 15;
+  const points = generateHeartPoints(textLetters.length, scale);
+
+  let i = 0;
+
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw heart outline for reference
+    ctx.beginPath();
+    for (let t = 0; t <= Math.PI * 2; t += 0.01) {
+      const x = 16 * Math.pow(Math.sin(t), 3);
+      const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+      const px = canvas.width / 2 + x * scale;
+      const py = canvas.height / 2 - y * scale;
+      if (t === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.strokeStyle = '#ff69b4';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // Draw dots for heart shape (optional)
+    for (let j = 0; j < i; j++) {
+      ctx.fillStyle = `hsl(${(j * 15) % 360}, 80%, 65%)`;
+      ctx.beginPath();
+      ctx.arc(points[j].x, points[j].y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Draw glowing text inside heart points
+    for (let k = 0; k < i && k < textLetters.length; k++) {
+      const pt = points[k];
+      ctx.font = "20px Pacifico";
+      ctx.shadowColor = "#ff69b4";
+      ctx.shadowBlur = 14;
+      ctx.fillStyle = "#ff2d78";
+      ctx.fillText(textLetters[k], pt.x - 8, pt.y + 8);
+    }
+
+    if (i < textLetters.length) {
+      i++;
+      requestAnimationFrame(animate);
+    }
+  }
+
+  animate();
+</script>
+</body>
+</html>
