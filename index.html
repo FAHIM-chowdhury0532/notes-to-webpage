@@ -2,85 +2,79 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fahim Chowdhury</title>
+  <title>Tree of Love</title>
   <style>
     body {
       margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #000;
-      color: #e0e0ff;
-      scroll-behavior: smooth;
+      background: #ffccd5;
+      overflow: hidden;
     }
-    header {
-      background: royalblue;
-      color: white;
-      padding: 40px 20px;
-      text-align: center;
-    }
-    header img {
-      width: 150px;
-      height: 150px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 4px solid white;
-    }
-    section {
-      padding: 40px 20px;
-      max-width: 800px;
-      margin: auto;
-    }
-    h2 {
-      color: royalblue;
-      border-bottom: 2px solid royalblue;
-      padding-bottom: 5px;
-    }
-    .interests span {
-      background: royalblue;
-      padding: 6px 12px;
-      margin: 5px;
-      border-radius: 20px;
-      display: inline-block;
-    }
-    .contact a {
-      color: royalblue;
-      text-decoration: none;
+    canvas {
       display: block;
-      margin: 5px 0;
     }
   </style>
 </head>
 <body>
-  <header>
-    <img src="IMG_3399.JPG" alt="Fahim's Profile Photo">
-    <h1>Fahim Chowdhury</h1>
-    <p>Student | Photographer | Explorer</p>
-  </header>
+<canvas id="canvas"></canvas>
 
-  <section>
-    <h2>About Me</h2>
-    <p>Greetings, I am Fahim, a dedicated student with a profound enthusiasm for travel, cultural exchange, and the pursuit of novel experiences. My passion for photography, particularly capturing the splendor of nature, is a cornerstone of my creative expression. Additionally, I engage in the art of video production and editing, crafting compelling visual narratives. With a warm and approachable demeanor, I take pride in fostering meaningful connections with others.</p>
-  </section>
+<script>
+  // Set up canvas
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 
-  <section>
-    <h2>Interests</h2>
-    <div class="interests">
-      <span>Photography</span>
-      <span>Travelling</span>
-      <span>Bike Riding</span>
-      <span>Videography</span>
-    </div>
-  </section>
+  // Point class
+  function Point(x, y) {
+    this.x = x;
+    this.y = y;
+  }
 
-  <section>
-    <h2>Contact</h2>
-    <div class="contact">
-      <a href="mailto:evu0532@gmail.com">📧 evu0532@gmail.com</a>
-      <a href="tel:+8801402719004">📞 01402719004</a>
-      <a href="https://www.facebook.com/Fahimchowdhury22" target="_blank">Facebook: Fahim Chowdhury (evu)</a>
-      <a href="https://www.instagram.com/_fahim_chowdury" target="_blank">Instagram: _fahim_chowdury</a>
-      <a href="https://www.linkedin.com/in/fahim-chowdhury-6bb501297/" target="_blank">LinkedIn: Fahim Chowdhury</a>
-    </div>
-  </section>
+  Point.prototype.mul = function(scale) {
+    return new Point(this.x * scale, this.y * scale);
+  };
+
+  Point.prototype.translate = function(dx, dy) {
+    return new Point(this.x + dx, this.y + dy);
+  };
+
+  // Heart shape generator
+  function Heart() {
+    const points = [];
+    let x, y, t;
+
+    for (let i = 10; i < 30; i += 0.2) {
+      t = i / Math.PI;
+      x = 16 * Math.pow(Math.sin(t), 3);
+      y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+      points.push(new Point(x, -y)); // flip y to make heart upright
+    }
+
+    this.points = points;
+    this.length = points.length;
+  }
+
+  Heart.prototype.get = function(i, scale) {
+    return this.points[i % this.length].mul(scale || 1);
+  };
+
+  // Draw heart
+  const heart = new Heart();
+  let i = 0;
+
+  function animate() {
+    if (i < heart.length) {
+      const pt = heart.get(i, 15).translate(canvas.width / 2, canvas.height / 2);
+      ctx.fillStyle = `hsl(${(i * 10) % 360}, 70%, 60%)`;
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+      i++;
+      requestAnimationFrame(animate);
+    }
+  }
+
+  animate();
+</script>
 </body>
 </html>
