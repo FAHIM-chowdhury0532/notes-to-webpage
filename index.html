@@ -60,7 +60,7 @@
             canvas.height = window.innerHeight;
         }
         resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('resize', resizeFrame);
 
         // Point class
         class Point {
@@ -170,26 +170,26 @@
         }
 
         // Draw mute/unmute icon
-        function drawAudioIcon(x, y, size) {
+        function drawAudioIcon(x, y, scale) {
             ctx.save();
             ctx.translate(x, y);
             ctx.fillStyle = '#ff2d78';
             ctx.beginPath();
             if (isMuted) {
-                ctx.moveTo(-size * 0.3, -size * 0.5);
-                ctx.lineTo(-size * 0.3, size * 0.5);
-                ctx.lineTo(size * 0.3, size * 0.5);
-                ctx.lineTo(size * 0.5, 0);
-                ctx.lineTo(size * 0.3, -size * 0.5);
+                ctx.moveTo(-scale * 0.3, -scale * 0.5);
+                ctx.lineTo(-scale * 0.3, scale * 0.5);
+                ctx.lineTo(scale * 0.3, scale * 0.5);
+                ctx.lineTo(scale * 0.5, 0);
+                ctx.lineTo(scale * 0.3, -scale * 0.5);
                 ctx.closePath();
-                ctx.moveTo(-size * 0.5, -size * 0.5);
-                ctx.lineTo(size * 0.5, size * 0.5);
+                ctx.moveTo(-scale * 0.5, -scale * 0.5);
+                ctx.lineTo(scale * 0.5, scale * 0.5);
             } else {
-                ctx.moveTo(-size * 0.3, -size * 0.5);
-                ctx.lineTo(-size * 0.3, size * 0.5);
-                ctx.lineTo(size * 0.3, size * 0.5);
-                ctx.lineTo(size * 0.5, 0);
-                ctx.lineTo(size * 0.3, -size * 0.5);
+                ctx.moveTo(-scale * 0.3, -scale * 0.5);
+                ctx.lineTo(-scale * 0.3, scale * 0.5);
+                ctx.lineTo(scale * 0.3, scale * 0.5);
+                ctx.lineTo(scale * 0.5, 0);
+                ctx.lineTo(scale * 0.3, -scale * 0.5);
                 ctx.closePath();
             }
             ctx.fill();
@@ -212,7 +212,7 @@
             ctx.closePath();
             ctx.clip();
 
-            // Draw placeholder gradient or image
+            // Draw image or placeholder gradient
             if (photoLoaded && photo.src) {
                 const imgWidth = photo.width;
                 const imgHeight = photo.height;
@@ -220,25 +220,23 @@
                 const heartAspect = heart.width / heart.height;
                 let drawWidth, drawHeight, offsetX, offsetY;
 
-                // Adjust scaling to fit both people, prioritizing visibility
+                // Scale to fit both people, prioritizing full visibility
                 if (imgAspect > heartAspect) {
-                    drawHeight = heart.height * 0.9; // Slight reduction to ensure both fit
-                    drawWidth = drawHeight * imgAspect;
-                    offsetX = -(drawWidth - heart.width) / 2; // Center horizontally
+                    // Image is wider (e.g., side-by-side), fit width
+                    drawWidth = heart.width;
+                    drawHeight = drawWidth / imgAspect;
+                    offsetX = 0;
                     offsetY = -(drawHeight - heart.height) / 2; // Center vertically
                 } else {
-                    drawWidth = heart.width * 0.9; // Slight reduction to ensure both fit
-                    drawHeight = drawWidth / imgAspect;
+                    // Image is taller (e.g., stacked), fit height
+                    drawHeight = heart.height;
+                    drawWidth = drawHeight * imgAspect;
                     offsetX = -(drawWidth - heart.width) / 2; // Center horizontally
-                    offsetY = -(drawHeight - heart.height) / 2; // Center vertically
+                    offsetY = 0;
                 }
 
-                // Ensure both people are visible by cropping symmetrically if needed
-                const cropOffsetX = (drawWidth - heart.width) / 2;
-                const cropOffsetY = (drawHeight - heart.height) / 2;
-                ctx.drawImage(photo, cropOffsetX, cropOffsetY, heart.width, heart.height, -heart.width / 2, -heart.height / 2, heart.width, heart.height);
-
                 ctx.globalAlpha = progress * 0.9;
+                ctx.drawImage(photo, offsetX, offsetY, drawWidth, drawHeight);
             } else {
                 const photoGradient = ctx.createLinearGradient(0, -heart.height / 2, 0, heart.height / 2);
                 photoGradient.addColorStop(0, '#ff69b4');
@@ -282,8 +280,8 @@
             const progress = easeInOut(Math.min(frame / maxFrames, 1));
             const currentI = Math.floor(progress * heart.length);
 
-            // Draw heart-shaped profile picture on left
-            drawProfilePicture(20 + photoHeartWidth / 2, canvas.height / 2, photoHeartScale, progress);
+            // Draw heart-shaped profile picture on top-left
+            drawProfilePicture(20, 20, photoHeartScale, progress);
 
             // Draw heart dots with pulse effect
             for (let j = 0; j < currentI; j++) {
@@ -400,7 +398,7 @@
         const audio = document.getElementById('background-audio');
         audio.addEventListener('error', function(e) {
             console.error('Audio loading failed:', e);
-            fallback.style.display = 'block';
+            fallback.style.display = 'block');
         });
 
         // Pause/play and mute/unmute control
