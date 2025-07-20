@@ -36,7 +36,7 @@
     <canvas id="canvas"></canvas>
     <div class="fallback">Your browser does not support this animation. Please try a modern browser.</div>
     
-    <img id="photo" src="" alt="Profile Photo for Tree of Love" style="display: none;" crossorigin="anonymous">
+    <img id="photo" src="https://raw.githubusercontent.com/your-username/tree-of-love/main/IMG_3399.JPG" alt="Profile Photo for Tree of Love" style="display: none;" crossorigin="anonymous">
 
     <audio id="background-audio" autoplay loop>
         <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
@@ -138,8 +138,8 @@
             console.error('Photo loading failed');
             photoLoaded = false;
         };
-        // Replace with your GitHub-hosted image URL, e.g., https://raw.githubusercontent.com/your-username/tree-of-love/main/IMG_3399.JPG
-        photo.src = '';
+        // The src is set to a placeholder; replace 'your-username' with your GitHub username
+        photo.src = 'https://raw.githubusercontent.com/your-username/tree-of-love/main/IMG_3399.JPG';
 
         // Cache text measurements
         let cachedDateTextWidth = 0;
