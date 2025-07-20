@@ -36,6 +36,8 @@
     <canvas id="canvas"></canvas>
     <div class="fallback">Your browser does not support this animation. Please try a modern browser.</div>
     
+    <img id="photo" src="" alt="Profile Photo for Tree of Love" style="display: none;" crossorigin="anonymous">
+
     <audio id="background-audio" autoplay loop>
         <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
@@ -122,6 +124,23 @@
         let isMuted = false;
         const baseScale = Math.min(window.innerWidth, window.innerHeight) / (window.innerWidth < 600 ? 25 : 30) * 0.75;
 
+        // Profile picture
+        const photo = document.getElementById('photo');
+        const photoHeartScale = baseScale * 0.6;
+        const photoHeartWidth = heart.width * photoHeartScale;
+        const photoHeartHeight = heart.height * photoHeartScale;
+        let photoLoaded = false;
+
+        photo.onload = function() {
+            photoLoaded = true;
+        };
+        photo.onerror = function() {
+            console.error('Photo loading failed');
+            photoLoaded = false;
+        };
+        // Replace with your GitHub-hosted image URL, e.g., https://raw.githubusercontent.com/your-username/tree-of-love/main/IMG_3399.JPG
+        photo.src = '';
+
         // Cache text measurements
         let cachedDateTextWidth = 0;
         let cachedSubtitleWidth = 0;
@@ -178,6 +197,73 @@
             ctx.restore();
         }
 
+        // Draw heart-shaped profile picture
+        function drawProfilePicture(x, y, scale, progress) {
+            ctx.save();
+            ctx.translate(x, y);
+            const pulseScale = 1 + 0.05 * Math.sin(frame * 0.05);
+            ctx.scale(scale * pulseScale, scale * pulseScale);
+            
+            // Create heart-shaped clipping path
+            ctx.beginPath();
+            for (let i = 0; i < heart.length; i++) {
+                const pt = heart.get(i, 1);
+                ctx[i === 0 ? 'moveTo' : 'lineTo'](pt.x, pt.y);
+            }
+            ctx.closePath();
+            ctx.clip();
+
+            // Draw placeholder gradient or image
+            if (photoLoaded && photo.src) {
+                const imgWidth = photo.width;
+                const imgHeight = photo.height;
+                const imgAspect = imgWidth / imgHeight;
+                const heartAspect = heart.width / heart.height;
+                let drawWidth, drawHeight, offsetX, offsetY;
+
+                if (imgAspect > heartAspect) {
+                    drawHeight = heart.height;
+                    drawWidth = drawHeight * imgAspect;
+                    offsetX = -(drawWidth - heart.width) / 2;
+                    offsetY = 0;
+                } else {
+                    drawWidth = heart.width;
+                    drawHeight = drawWidth / imgAspect;
+                    offsetX = 0;
+                    offsetY = -(drawHeight - heart.height) / 2;
+                }
+
+                ctx.globalAlpha = progress * 0.9;
+                ctx.drawImage(photo, offsetX, offsetY, drawWidth, drawHeight);
+            } else {
+                const photoGradient = ctx.createLinearGradient(0, -heart.height / 2, 0, heart.height / 2);
+                photoGradient.addColorStop(0, '#ff69b4');
+                photoGradient.addColorStop(1, '#ff99b9');
+                ctx.fillStyle = photoGradient;
+                ctx.globalAlpha = progress * 0.9;
+                ctx.fillRect(-heart.width / 2, -heart.height / 2, heart.width, heart.height);
+            }
+
+            // Draw glowing border
+            ctx.restore();
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(scale * pulseScale, scale * pulseScale);
+            ctx.strokeStyle = '#ff69b4';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = '#ff69b4';
+            ctx.shadowBlur = 20;
+            ctx.globalAlpha = progress * 0.9;
+            ctx.beginPath();
+            for (let i = 0; i < heart.length; i++) {
+                const pt = heart.get(i, 1);
+                ctx[i === 0 ? 'moveTo' : 'lineTo'](pt.x, pt.y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+            ctx.restore();
+        }
+
         // Animation loop
         function animate() {
             if (isPaused) return;
@@ -191,6 +277,9 @@
 
             const progress = easeInOut(Math.min(frame / maxFrames, 1));
             const currentI = Math.floor(progress * heart.length);
+
+            // Draw heart-shaped profile picture on left
+            drawProfilePicture(20 + photoHeartWidth / 2, canvas.height / 2, photoHeartScale, progress);
 
             // Draw heart dots with pulse effect
             for (let j = 0; j < currentI; j++) {
