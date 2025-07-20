@@ -36,7 +36,7 @@
     <canvas id="canvas"></canvas>
     <div class="fallback">Your browser does not support this animation. Please try a modern browser.</div>
     
-    <img id="photo" src="https://raw.githubusercontent.com/your-username/tree-of-love/main/IMG_3399.JPG" alt="Profile Photo for Tree of Love" style="display: none;" crossorigin="anonymous">
+    <img id="photo" src="https://raw.githubusercontent.com/fahim-chowdhury0532/notes-to-webpage/main/IMG_3399.JPG" alt="Profile Photo for Tree of Love" style="display: none;" crossorigin="anonymous">
 
     <audio id="background-audio" autoplay loop>
         <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
@@ -138,8 +138,7 @@
             console.error('Photo loading failed');
             photoLoaded = false;
         };
-        // The src is set to a placeholder; replace 'your-username' with your GitHub username
-        photo.src = 'https://raw.githubusercontent.com/your-username/tree-of-love/main/IMG_3399.JPG';
+        photo.src = 'https://raw.githubusercontent.com/fahim-chowdhury0532/notes-to-webpage/main/IMG_3399.JPG';
 
         // Cache text measurements
         let cachedDateTextWidth = 0;
@@ -221,20 +220,25 @@
                 const heartAspect = heart.width / heart.height;
                 let drawWidth, drawHeight, offsetX, offsetY;
 
+                // Adjust scaling to fit both people, prioritizing visibility
                 if (imgAspect > heartAspect) {
-                    drawHeight = heart.height;
+                    drawHeight = heart.height * 0.9; // Slight reduction to ensure both fit
                     drawWidth = drawHeight * imgAspect;
-                    offsetX = -(drawWidth - heart.width) / 2;
-                    offsetY = 0;
+                    offsetX = -(drawWidth - heart.width) / 2; // Center horizontally
+                    offsetY = -(drawHeight - heart.height) / 2; // Center vertically
                 } else {
-                    drawWidth = heart.width;
+                    drawWidth = heart.width * 0.9; // Slight reduction to ensure both fit
                     drawHeight = drawWidth / imgAspect;
-                    offsetX = 0;
-                    offsetY = -(drawHeight - heart.height) / 2;
+                    offsetX = -(drawWidth - heart.width) / 2; // Center horizontally
+                    offsetY = -(drawHeight - heart.height) / 2; // Center vertically
                 }
 
+                // Ensure both people are visible by cropping symmetrically if needed
+                const cropOffsetX = (drawWidth - heart.width) / 2;
+                const cropOffsetY = (drawHeight - heart.height) / 2;
+                ctx.drawImage(photo, cropOffsetX, cropOffsetY, heart.width, heart.height, -heart.width / 2, -heart.height / 2, heart.width, heart.height);
+
                 ctx.globalAlpha = progress * 0.9;
-                ctx.drawImage(photo, offsetX, offsetY, drawWidth, drawHeight);
             } else {
                 const photoGradient = ctx.createLinearGradient(0, -heart.height / 2, 0, heart.height / 2);
                 photoGradient.addColorStop(0, '#ff69b4');
