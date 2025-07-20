@@ -36,8 +36,6 @@
     <canvas id="canvas"></canvas>
     <div class="fallback">Your browser does not support this animation. Please try a modern browser.</div>
     
-    <img id="photo" src="https://raw.githubusercontent.com/fahim-chowdhury0532/notes-to-webpage/main/IMG_3399.JPG" alt="Profile Photo for Tree of Love" style="display: none;" crossorigin="anonymous">
-
     <audio id="background-audio" autoplay loop>
         <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
@@ -60,7 +58,7 @@
             canvas.height = window.innerHeight;
         }
         resizeCanvas();
-        window.addEventListener('resize', resizeFrame);
+        window.addEventListener('resize', resizeCanvas);
 
         // Point class
         class Point {
@@ -124,22 +122,6 @@
         let isMuted = false;
         const baseScale = Math.min(window.innerWidth, window.innerHeight) / (window.innerWidth < 600 ? 25 : 30) * 0.75;
 
-        // Profile picture
-        const photo = document.getElementById('photo');
-        const photoHeartScale = baseScale * 0.6;
-        const photoHeartWidth = heart.width * photoHeartScale;
-        const photoHeartHeight = heart.height * photoHeartScale;
-        let photoLoaded = false;
-
-        photo.onload = function() {
-            photoLoaded = true;
-        };
-        photo.onerror = function() {
-            console.error('Photo loading failed');
-            photoLoaded = false;
-        };
-        photo.src = 'https://raw.githubusercontent.com/fahim-chowdhury0532/notes-to-webpage/main/IMG_3399.JPG';
-
         // Cache text measurements
         let cachedDateTextWidth = 0;
         let cachedSubtitleWidth = 0;
@@ -170,99 +152,29 @@
         }
 
         // Draw mute/unmute icon
-        function drawAudioIcon(x, y, scale) {
+        function drawAudioIcon(x, y, size) {
             ctx.save();
             ctx.translate(x, y);
             ctx.fillStyle = '#ff2d78';
             ctx.beginPath();
             if (isMuted) {
-                ctx.moveTo(-scale * 0.3, -scale * 0.5);
-                ctx.lineTo(-scale * 0.3, scale * 0.5);
-                ctx.lineTo(scale * 0.3, scale * 0.5);
-                ctx.lineTo(scale * 0.5, 0);
-                ctx.lineTo(scale * 0.3, -scale * 0.5);
+                ctx.moveTo(-size * 0.3, -size * 0.5);
+                ctx.lineTo(-size * 0.3, size * 0.5);
+                ctx.lineTo(size * 0.3, size * 0.5);
+                ctx.lineTo(size * 0.5, 0);
+                ctx.lineTo(size * 0.3, -size * 0.5);
                 ctx.closePath();
-                ctx.moveTo(-scale * 0.5, -scale * 0.5);
-                ctx.lineTo(scale * 0.5, scale * 0.5);
+                ctx.moveTo(-size * 0.5, -size * 0.5);
+                ctx.lineTo(size * 0.5, size * 0.5);
             } else {
-                ctx.moveTo(-scale * 0.3, -scale * 0.5);
-                ctx.lineTo(-scale * 0.3, scale * 0.5);
-                ctx.lineTo(scale * 0.3, scale * 0.5);
-                ctx.lineTo(scale * 0.5, 0);
-                ctx.lineTo(scale * 0.3, -scale * 0.5);
+                ctx.moveTo(-size * 0.3, -size * 0.5);
+                ctx.lineTo(-size * 0.3, size * 0.5);
+                ctx.lineTo(size * 0.3, size * 0.5);
+                ctx.lineTo(size * 0.5, 0);
+                ctx.lineTo(size * 0.3, -size * 0.5);
                 ctx.closePath();
             }
             ctx.fill();
-            ctx.restore();
-        }
-
-        // Draw heart-shaped profile picture
-        function drawProfilePicture(x, y, scale, progress) {
-            ctx.save();
-            ctx.translate(x, y);
-            const pulseScale = 1 + 0.05 * Math.sin(frame * 0.05);
-            ctx.scale(scale * pulseScale, scale * pulseScale);
-            
-            // Create heart-shaped clipping path
-            ctx.beginPath();
-            for (let i = 0; i < heart.length; i++) {
-                const pt = heart.get(i, 1);
-                ctx[i === 0 ? 'moveTo' : 'lineTo'](pt.x, pt.y);
-            }
-            ctx.closePath();
-            ctx.clip();
-
-            // Draw image or placeholder gradient
-            if (photoLoaded && photo.src) {
-                const imgWidth = photo.width;
-                const imgHeight = photo.height;
-                const imgAspect = imgWidth / imgHeight;
-                const heartAspect = heart.width / heart.height;
-                let drawWidth, drawHeight, offsetX, offsetY;
-
-                // Scale to fit both people, prioritizing full visibility
-                if (imgAspect > heartAspect) {
-                    // Image is wider (e.g., side-by-side), fit width
-                    drawWidth = heart.width;
-                    drawHeight = drawWidth / imgAspect;
-                    offsetX = 0;
-                    offsetY = -(drawHeight - heart.height) / 2; // Center vertically
-                } else {
-                    // Image is taller (e.g., stacked), fit height
-                    drawHeight = heart.height;
-                    drawWidth = drawHeight * imgAspect;
-                    offsetX = -(drawWidth - heart.width) / 2; // Center horizontally
-                    offsetY = 0;
-                }
-
-                ctx.globalAlpha = progress * 0.9;
-                ctx.drawImage(photo, offsetX, offsetY, drawWidth, drawHeight);
-            } else {
-                const photoGradient = ctx.createLinearGradient(0, -heart.height / 2, 0, heart.height / 2);
-                photoGradient.addColorStop(0, '#ff69b4');
-                photoGradient.addColorStop(1, '#ff99b9');
-                ctx.fillStyle = photoGradient;
-                ctx.globalAlpha = progress * 0.9;
-                ctx.fillRect(-heart.width / 2, -heart.height / 2, heart.width, heart.height);
-            }
-
-            // Draw glowing border
-            ctx.restore();
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.scale(scale * pulseScale, scale * pulseScale);
-            ctx.strokeStyle = '#ff69b4';
-            ctx.lineWidth = 2;
-            ctx.shadowColor = '#ff69b4';
-            ctx.shadowBlur = 20;
-            ctx.globalAlpha = progress * 0.9;
-            ctx.beginPath();
-            for (let i = 0; i < heart.length; i++) {
-                const pt = heart.get(i, 1);
-                ctx[i === 0 ? 'moveTo' : 'lineTo'](pt.x, pt.y);
-            }
-            ctx.closePath();
-            ctx.stroke();
             ctx.restore();
         }
 
@@ -279,9 +191,6 @@
 
             const progress = easeInOut(Math.min(frame / maxFrames, 1));
             const currentI = Math.floor(progress * heart.length);
-
-            // Draw heart-shaped profile picture on top-left
-            drawProfilePicture(20, 20, photoHeartScale, progress);
 
             // Draw heart dots with pulse effect
             for (let j = 0; j < currentI; j++) {
@@ -398,7 +307,7 @@
         const audio = document.getElementById('background-audio');
         audio.addEventListener('error', function(e) {
             console.error('Audio loading failed:', e);
-            fallback.style.display = 'block');
+            fallback.style.display = 'block';
         });
 
         // Pause/play and mute/unmute control
