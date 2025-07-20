@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tree of Love</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Playfair+Display:wght@600&family=Roboto:wght@400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Playfair+Display:wght@600&family=Great+Vibes:wght@400&display=swap');
 
         body {
             margin: 0;
@@ -126,7 +126,7 @@
         let cachedDateTextWidth = 0;
         let cachedSubtitleWidth = 0;
         function updateTextMeasurements() {
-            ctx.font = '400 ' + Math.max(14, baseScale * 0.8) + 'px Roboto';
+            ctx.font = '400 ' + Math.max(18, baseScale * 1.2) + 'px Great Vibes';
             cachedDateTextWidth = ctx.measureText(dateText).width;
             ctx.font = '700 ' + Math.max(20, baseScale * 1.0) + 'px Dancing Script';
             cachedSubtitleWidth = ctx.measureText(subtitleText).width;
@@ -236,12 +236,12 @@
             ctx.fillText(subtitleText, canvas.width / 2 - heartWidth / 2 - baseScale * 1.0, subtitleY);
             ctx.strokeText(subtitleText, canvas.width / 2 - heartWidth / 2 - baseScale * 1.0, subtitleY);
 
-            // Draw date text in top right
-            const dateFontSize = Math.max(14, baseScale * 0.8);
-            ctx.font = '400 ' + dateFontSize + 'px Roboto';
+            // Draw date text in top right with larger font
+            const dateFontSize = Math.max(18, baseScale * 1.2);
+            ctx.font = '400 ' + dateFontSize + 'px Great Vibes';
             const dateTextHeight = dateFontSize * 1.2;
             ctx.save();
-            ctx.translate(canvas.width - 10, 10);
+            ctx.translate(canvas.width - 15, 15);
             const dateGradient = ctx.createLinearGradient(0, 0, 0, dateTextHeight);
             dateGradient.addColorStop(0, '#ff69b4');
             dateGradient.addColorStop(1, '#ff99b9');
@@ -249,18 +249,18 @@
             ctx.globalAlpha = 0.9;
             const pulseScale = 1 + 0.03 * Math.sin(frame * 0.05);
             ctx.beginPath();
-            ctx.roundRect(-cachedDateTextWidth - 15, -15, cachedDateTextWidth + 30, dateTextHeight + 30, 10 * pulseScale);
+            ctx.roundRect(-cachedDateTextWidth - 20, -20, cachedDateTextWidth + 40, dateTextHeight + 40, 10 * pulseScale);
             ctx.fill();
             ctx.restore();
 
-            ctx.font = '400 ' + dateFontSize + 'px Roboto';
+            ctx.font = '400 ' + dateFontSize + 'px Great Vibes';
             ctx.fillStyle = '#ffffff';
             ctx.shadowColor = '#ff1493';
-            ctx.shadowBlur = 20;
+            ctx.shadowBlur = 25;
             ctx.textAlign = 'right';
             ctx.textBaseline = 'top';
             ctx.globalAlpha = progress * 0.9;
-            ctx.fillText(dateText, canvas.width - 10, 10 + dateTextHeight);
+            ctx.fillText(dateText, canvas.width - 15, 15 + dateTextHeight);
 
             // Draw timer with unique design
             const timerText = getTimeElapsed();
