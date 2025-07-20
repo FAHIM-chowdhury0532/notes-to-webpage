@@ -2,26 +2,41 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tree of Love</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Playfair+Display:wght@600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Playfair+Display:wght@600&family=Roboto:wght@400&display=swap');
 
         body {
             margin: 0;
-            background: #ffccd5;
             overflow: hidden;
             cursor: pointer;
+            touch-action: manipulation;
         }
         canvas {
             display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .fallback {
+            display: none;
+            font-family: 'Playfair Display', serif;
+            color: #ff2d78;
+            text-align: center;
+            padding: 20px;
+        }
+        @media (max-width: 600px) {
+            .fallback {
+                font-size: 16px;
+            }
         }
     </style>
 </head>
 <body>
     <canvas id="canvas"></canvas>
+    <div class="fallback">Your browser does not support this animation. Please try a modern browser.</div>
     
-    <audio autoplay loop>
+    <audio id="background-audio" autoplay loop>
         <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
@@ -30,8 +45,10 @@
         // Canvas setup
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
+        const fallback = document.querySelector('.fallback');
         if (!ctx) {
             console.error('Canvas context not supported');
+            fallback.style.display = 'block';
             throw new Error('Canvas context not supported');
         }
 
@@ -61,14 +78,13 @@
         class Heart {
             constructor() {
                 this.points = [];
-                for (let i = 10; i < 30; i += 0.2) {
+                for (let i = 10; i < 30; i += 0.1) {
                     const t = i / Math.PI;
                     const x = 16 * Math.pow(Math.sin(t), 3);
                     const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
                     this.points.push(new Point(x, y));
                 }
                 this.length = this.points.length;
-                // Calculate bounding box
                 this.minX = Math.min(...this.points.map(p => p.x));
                 this.maxX = Math.max(...this.points.map(p => p.x));
                 this.minY = Math.min(...this.points.map(p => p.y));
@@ -91,24 +107,40 @@
             const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
             const days = Math.floor((diffMs / (1000 * 60 * 60 * 24)) % 365);
             const years = Math.floor(diffMs / (1000 * 60 * 60 * 24 * 365));
-            return `${years} years, ${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds`;
+            return years + ' years, ' + days + ' days, ' + hours + ' hours, ' + minutes + ' minutes, ' + seconds + ' seconds';
         }
 
         // Animation setup
         const heart = new Heart();
-        const text = "Even this heart, drawn in pixels, beats only for you, Anamika.";
-        const easeInOut = t => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+        const mainText = "My heart beats only for you, Anamika";
+        const subtitleText = "Forever Yours";
+        const dateText = "Since April 27, 2021, my love for Anamika grows";
+        const easeInOut = function(t) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; };
         let frame = 0;
         const maxFrames = 100;
         let isPaused = false;
-        const baseScale = Math.min(window.innerWidth, window.innerHeight) / 30; // Larger heart
+        let isMuted = false;
+        const baseScale = Math.min(window.innerWidth, window.innerHeight) / (window.innerWidth < 600 ? 25 : 30) * 0.75;
+
+        // Cache text measurements
+        let cachedDateTextWidth = 0;
+        let cachedSubtitleWidth = 0;
+        function updateTextMeasurements() {
+            ctx.font = '400 ' + Math.max(14, baseScale * 0.8) + 'px Roboto';
+            cachedDateTextWidth = ctx.measureText(dateText).width;
+            ctx.font = '700 ' + Math.max(20, baseScale * 1.0) + 'px Dancing Script';
+            cachedSubtitleWidth = ctx.measureText(subtitleText).width;
+        }
+        updateTextMeasurements();
+        window.addEventListener('resize', updateTextMeasurements);
 
         // Draw small heart for timer background
         function drawSmallHeart(x, y, scale) {
+            const pulseScale = scale * (1 + 0.09 * Math.sin(frame * 0.04));
             ctx.save();
             ctx.translate(x, y);
-            ctx.scale(scale, scale);
-            ctx.fillStyle = 'rgba(255, 105, 180, 0.3)'; // Faint pink heart
+            ctx.scale(pulseScale, pulseScale);
+            ctx.fillStyle = 'rgba(255, 105, 180, 0.3)';
             ctx.beginPath();
             for (let i = 0; i < heart.length; i++) {
                 const pt = heart.get(i, 1);
@@ -119,72 +151,144 @@
             ctx.restore();
         }
 
+        // Draw mute/unmute icon
+        function drawAudioIcon(x, y, size) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.fillStyle = '#ff2d78';
+            ctx.beginPath();
+            if (isMuted) {
+                ctx.moveTo(-size * 0.3, -size * 0.5);
+                ctx.lineTo(-size * 0.3, size * 0.5);
+                ctx.lineTo(size * 0.3, size * 0.5);
+                ctx.lineTo(size * 0.5, 0);
+                ctx.lineTo(size * 0.3, -size * 0.5);
+                ctx.closePath();
+                ctx.moveTo(-size * 0.5, -size * 0.5);
+                ctx.lineTo(size * 0.5, size * 0.5);
+            } else {
+                ctx.moveTo(-size * 0.3, -size * 0.5);
+                ctx.lineTo(-size * 0.3, size * 0.5);
+                ctx.lineTo(size * 0.3, size * 0.5);
+                ctx.lineTo(size * 0.5, 0);
+                ctx.lineTo(size * 0.3, -size * 0.5);
+                ctx.closePath();
+            }
+            ctx.fill();
+            ctx.restore();
+        }
+
         // Animation loop
         function animate() {
             if (isPaused) return;
 
-            ctx.fillStyle = 'rgba(255, 204, 213, 0.1)';
+            // Draw radial gradient background
+            const bgGradient = ctx.createRadialGradient(canvas.width / 2, canvas.height / 2, 0, canvas.width / 2, canvas.height / 2, Math.max(canvas.width, canvas.height) * 0.8);
+            bgGradient.addColorStop(0, '#fff0f5');
+            bgGradient.addColorStop(1, '#ffa1b5');
+            ctx.fillStyle = bgGradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             const progress = easeInOut(Math.min(frame / maxFrames, 1));
             const currentI = Math.floor(progress * heart.length);
 
-            // Draw heart dots
+            // Draw heart dots with pulse effect
             for (let j = 0; j < currentI; j++) {
                 const pt = heart.get(j, baseScale).translate(canvas.width / 2, canvas.height / 2);
-                ctx.fillStyle = `hsl(${(j * 10) % 360}, 70%, 60%)`;
+                const dotSize = 3 + 0.4 * Math.sin(frame * 0.05 + j * 0.08);
+                ctx.fillStyle = 'hsl(' + (j * 10 % 360) + ', 70%, 60%)';
                 ctx.beginPath();
-                ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
+                ctx.arc(pt.x, pt.y, dotSize, 0, Math.PI * 2);
                 ctx.fill();
             }
 
-            // Draw text inside heart
-            ctx.font = `700 ${Math.max(14, baseScale * 0.7)}px 'Dancing Script'`;
-            ctx.fillStyle = "#ff2d78";
-            ctx.shadowColor = "#ff69b4";
-            ctx.shadowBlur = 15;
+            // Draw main text inside heart
+            ctx.font = '700 ' + Math.max(10, baseScale * 0.5) + 'px Dancing Script';
+            ctx.fillStyle = '#ff2d78';
+            ctx.shadowColor = '#ff69b4';
+            ctx.shadowBlur = 18;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.globalAlpha = progress * 0.9;
 
-            // Fit text within heart
-            const textWidth = ctx.measureText(text).width;
+            const textWidth = ctx.measureText(mainText).width;
             const heartWidth = heart.width * baseScale;
             const heartHeight = heart.height * baseScale;
-            const textScale = Math.min(heartWidth / textWidth * 0.9, heartHeight / (baseScale * 1.2));
+            const textScale = Math.min(heartWidth / textWidth * 0.8, heartHeight / (baseScale * 1.0));
             ctx.save();
             ctx.translate(canvas.width / 2, canvas.height / 2);
             ctx.scale(textScale, textScale);
-            ctx.fillText(text, 0, 0);
+            ctx.fillText(mainText, 0, 0);
             ctx.restore();
+
+            // Draw subtitle just below heart, further left
+            const subtitleFontSize = Math.max(20, baseScale * 1.0);
+            ctx.font = '700 ' + subtitleFontSize + 'px Dancing Script';
+            ctx.fillStyle = '#ff1493';
+            ctx.strokeStyle = '#ff69b4';
+            ctx.lineWidth = 1;
+            ctx.shadowColor = '#ffb6c1';
+            ctx.shadowBlur = 30 + 6 * Math.sin(frame * 0.05);
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.globalAlpha = progress * 1.0;
+            const subtitleY = canvas.height / 2 + heartHeight / 2 + baseScale * 0.3;
+            ctx.fillText(subtitleText, canvas.width / 2 - heartWidth / 2 - baseScale * 1.0, subtitleY);
+            ctx.strokeText(subtitleText, canvas.width / 2 - heartWidth / 2 - baseScale * 1.0, subtitleY);
+
+            // Draw date text in top right
+            const dateFontSize = Math.max(14, baseScale * 0.8);
+            ctx.font = '400 ' + dateFontSize + 'px Roboto';
+            const dateTextHeight = dateFontSize * 1.2;
+            ctx.save();
+            ctx.translate(canvas.width - 10, 10);
+            const dateGradient = ctx.createLinearGradient(0, 0, 0, dateTextHeight);
+            dateGradient.addColorStop(0, '#ff69b4');
+            dateGradient.addColorStop(1, '#ff99b9');
+            ctx.fillStyle = dateGradient;
+            ctx.globalAlpha = 0.9;
+            const pulseScale = 1 + 0.03 * Math.sin(frame * 0.05);
+            ctx.beginPath();
+            ctx.roundRect(-cachedDateTextWidth - 15, -15, cachedDateTextWidth + 30, dateTextHeight + 30, 10 * pulseScale);
+            ctx.fill();
+            ctx.restore();
+
+            ctx.font = '400 ' + dateFontSize + 'px Roboto';
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = '#ff1493';
+            ctx.shadowBlur = 20;
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'top';
+            ctx.globalAlpha = progress * 0.9;
+            ctx.fillText(dateText, canvas.width - 10, 10 + dateTextHeight);
 
             // Draw timer with unique design
             const timerText = getTimeElapsed();
             const timerFontSize = Math.max(14, baseScale * 0.7);
-            ctx.font = `600 ${timerFontSize}px 'Playfair Display'`;
+            ctx.font = '600 ' + timerFontSize + 'px Playfair Display';
             const timerWidth = ctx.measureText(timerText).width;
             const timerHeight = timerFontSize * 1.2;
             const padding = 10;
 
-            // Draw decorative container
+            // Draw timer container
             ctx.save();
             ctx.translate(10, canvas.height - 10);
-            const gradient = ctx.createLinearGradient(0, -timerHeight, 0, 0);
-            gradient.addColorStop(0, '#ff69b4');
-            gradient.addColorStop(1, '#ffccd5');
-            ctx.fillStyle = gradient;
+            const timerGradient = ctx.createLinearGradient(0, -timerHeight - padding, 0, 0);
+            timerGradient.addColorStop(0, '#ff69b4');
+            timerGradient.addColorStop(1, '#ff1493');
+            ctx.fillStyle = timerGradient;
             ctx.beginPath();
-            ctx.roundRect(-padding, -timerHeight - padding, timerWidth + 2 * padding, timerHeight + 2 * padding, 10);
+            ctx.roundRect(-padding, -timerHeight - padding, timerWidth + 2 * padding + 30, timerHeight + 2 * padding, 10);
             ctx.fill();
-            // Draw small heart in background
-            drawSmallHeart(timerWidth / 2, -timerHeight / 2, baseScale * 0.5);
+            drawSmallHeart(timerWidth / 2, -timerHeight / 2, baseScale * 0.65);
+            drawAudioIcon(timerWidth + 20, -timerHeight / 2, baseScale * 0.4);
             ctx.restore();
 
             // Draw timer text
-            ctx.font = `600 ${timerFontSize}px 'Playfair Display'`;
-            ctx.fillStyle = "#ffffff";
-            ctx.shadowColor = "#ff69b4";
-            ctx.shadowBlur = 15 + 5 * Math.sin(frame * 0.05); // Pulsing shadow
+            ctx.font = '600 ' + timerFontSize + 'px Playfair Display';
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = '#ff69b4';
+            ctx.shadowBlur = 15 + 5 * Math.sin(frame * 0.05);
             ctx.textAlign = 'left';
             ctx.textBaseline = 'bottom';
             ctx.globalAlpha = 1;
@@ -194,27 +298,47 @@
             ctx.textAlign = 'left';
             ctx.textBaseline = 'alphabetic';
 
-            // Continue animation for timer
+            // Continue animation
             frame = frame < maxFrames ? frame + 1 : maxFrames;
             requestAnimationFrame(animate);
         }
 
         // Audio handling
-        const audio = document.querySelector('audio');
-        audio.addEventListener('error', (e) => {
+        const audio = document.getElementById('background-audio');
+        audio.addEventListener('error', function(e) {
             console.error('Audio loading failed:', e);
+            fallback.style.display = 'block';
         });
 
-        // Pause/play control
-        document.addEventListener('click', () => {
-            isPaused = !isPaused;
-            if (!isPaused) {
-                audio.play().catch(e => console.error('Audio play failed:', e));
-                animate();
+        // Pause/play and mute/unmute control
+        function handleInteraction(e) {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX || e.touches[0].clientX) - rect.left;
+            const y = (e.clientY || e.touches[0].clientY) - rect.top;
+            const timerFontSize = Math.max(14, baseScale * 0.7);
+            const timerWidth = ctx.measureText(getTimeElapsed()).width;
+            const timerHeight = timerFontSize * 1.2;
+            const iconX = 10 + timerWidth + 20;
+            const iconY = canvas.height - 10 - timerHeight / 2;
+            const iconSize = baseScale * 0.4;
+
+            // Check if audio icon was clicked/tapped
+            if (x >= iconX - iconSize && x <= iconX + iconSize && y >= iconY - iconSize && y <= iconY + iconSize) {
+                isMuted = !isMuted;
+                audio.muted = isMuted;
             } else {
-                audio.pause();
+                isPaused = !isPaused;
+                if (!isPaused) {
+                    audio.play().catch(function(e) { console.error('Audio play failed:', e); });
+                    animate();
+                } else {
+                    audio.pause();
+                }
             }
-        });
+        }
+        document.addEventListener('click', handleInteraction);
+        document.addEventListener('touchstart', handleInteraction);
 
         // Start animation
         animate();
